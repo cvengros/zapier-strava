@@ -1,5 +1,13 @@
 const authentication = require('./authentication');
 
+// To include the Authorization header on all outbound requests, simply define a function here.
+// It runs runs before each request is sent out, allowing you to make tweaks to the request in a centralized spot
+const includeBearerToken = (request, z, bundle) => {
+  if (bundle.authData.access_token) {
+    request.headers.Authorization = `Bearer ${bundle.authData.access_token}`;
+  }
+  return request;
+};
 
 // We can roll up all our behaviors in an App.
 const App = {
@@ -8,8 +16,11 @@ const App = {
   version: require('./package.json').version,
   platformVersion: require('zapier-platform-core').version,
 
+  authentication: authentication,
+
   // beforeRequest & afterResponse are optional hooks into the provided HTTP client
   beforeRequest: [
+    includeBearerToken
   ],
 
   afterResponse: [
