@@ -6,12 +6,12 @@ const zapier = require('zapier-platform-core');
 const App = require('../index');
 const appTester = zapier.createAppTester(App);
 
-describe('My App', () => {
-
-  it('should test something', (done) => {
-    const x = 1;
-    x.should.eql(1);
-    done();
+describe('oauth2 app', () => {
+  before(() => {
+    // It's a good idea to store your Client ID and Secret in the environment rather than in code.
+    // This works locally via the `export` shell command and in production by using `zapier env`
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+      throw new Error('For the tests to run, you need to do `export CLIENT_ID=1234 CLIENT_SECRET=asdf`');
+    }
   });
-
 });
