@@ -11,10 +11,10 @@ Kde jsem skoncil:
  - udelal jsem gettovani tech stats, chce to po me, aby tam bylo id. podle toho to pry poznava jestli ne to novy objekt - muj problem je ze to nebude novy objekt, ale bude tam zmena - mozna neco co se jmenuej hook. kazdopadne chyba: https://zapier.com/developer/documentation/v2/app-checks-reference/#ZDE009
  - nejdriv to tam asi pushnu a udelam jenom trigger na https://www.strava.com/api/v3/athlete 
  - je potreba vyresit jak tam dat to athlete id, ponevadz ten vtip je na https://www.strava.com/api/v3/athletes/705929/stats?
- - jeste by to chtelo vyresit refreshovani toho tokenu
  - poresit alerty: https://github.com/cvengros/zapier-strava/network/alerts
 
 Done:
+ - jeste by to chtelo vyresit refreshovani toho tokenu
  - nejspis musis na strave povolit domenu asi
  - upload se poved, je to tam jako Strava 1.0.0 .. hazi to nejakej error co rika neco o bad request invalid redirect uri, kdyz zkusis udelat connect account 
 
