@@ -1,5 +1,5 @@
 const authentication = require('./authentication');
-const mileageTrigger = require('./triggers/mileage');
+const mileageUpdatedTrigger = require('./triggers/mileageUpdated');
 
 // To include the Authorization header on all outbound requests, simply define a function here.
 // It runs runs before each request is sent out, allowing you to make tweaks to the request in a centralized spot
@@ -34,7 +34,7 @@ const App = {
   // If you want your trigger to show up, you better include it here!
   triggers: {
     // haha
-    [mileageTrigger.key]: mileageTrigger
+    [mileageUpdatedTrigger.key]: mileageUpdatedTrigger
   },
 
   // If you want your searches to show up, you better include it here!

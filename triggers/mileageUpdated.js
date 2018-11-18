@@ -1,3 +1,36 @@
+// milestones in km
+const MILESTONES = {
+  ride: 500,
+  run: 50,
+  swim: 10
+}
+
+const roundStat = (stat, type) => {
+  // all stats are in meters
+  const stat_km = stat/1000;
+  const milestone = MILESTONES[type];
+  // getting the last milestone reached
+  return Math.floor(stat_km/milestone) * milestone;
+}
+
+const roundAllStats = (stats) => {
+  // take all needed stats and round them, return in an object
+  const r = {};
+  r.ytd_ride_distance = roundStat(stats.ytd_ride_totals.distance, 'ride');
+  r.all_ride_distance = roundStat(stats.all_ride_totals.distance, 'ride');
+  r.ytd_run_distance = roundStat(stats.ytd_run_totals, 'run');
+  r.all_run_distance = roundStat(stats.all_run_totals, 'run');
+  r.ytd_swim_distance = roundStat(stats.ytd_swim_totals.distance, 'swim');
+  r.all_swim_distance = roundStat(stats.all_swim_totals.distance, 'swim');
+  return r;
+}
+
+const concatStats = (roundedStats) => {
+  // take all rounded stats (sorted by its key so that it's consistent)
+  // and join them into a string
+  return Object.keys(roundedStats).sort().map((k) => roundedStats[k]).join(' ');
+}
+
 const getAthleteStats = (z, bundle) => {
   // get the athlete to see the id
   const promise = z.request(`${process.env.API_URL}/athlete`);
@@ -9,7 +42,10 @@ const getAthleteStats = (z, bundle) => {
     const statsPromise = z.request(`${process.env.API_URL}/athletes/${athleteId}/stats`);
     return statsPromise.then((response) => {
       const stats = JSON.parse(response.content);
-      stats.id = athleteId;
+      // round all the watched stats
+      stats.rounded = roundAllStats(stats);
+      // hack the id into a concat of all watched stats
+      stats.id = concatStats(stats);
       return [stats];
     });
   });
@@ -17,7 +53,7 @@ const getAthleteStats = (z, bundle) => {
 
 module.exports = {
   key: 'athleteStats',
-  noun: 'Athlete Stats',
+  noun: 'Athlete Stat',
   display: {
     label: 'Athlete Stats Updated',
     description: 'Trigger when an athlete stats have been updated'
