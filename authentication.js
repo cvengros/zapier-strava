@@ -82,7 +82,7 @@ module.exports = {
     refreshAccessToken: refreshAccessToken,
     // If you want Zapier to automatically invoke `refreshAccessToken` on a 401 response, set to true
     autoRefresh: true,
-    scope: 'read'
+    scope: 'read,activity:read'
   },
   test: testAuth,
   connectionLabel: '{{firstname}} {{lastname}}'

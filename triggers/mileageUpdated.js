@@ -1,27 +1,27 @@
 // milestones in km
 const MILESTONES = {
-  ride: 500,
-  run: 50,
-  swim: 10
+  Ride: 500,
+  Run: 50,
+  Swim: 10
 }
 
 const roundStat = (stat, type) => {
   // all stats are in meters
-  const stat_km = stat/1000;
+  const statKm = stat/1000;
   const milestone = MILESTONES[type];
   // getting the last milestone reached
-  return Math.floor(stat_km/milestone) * milestone;
+  return Math.floor(statKm/milestone) * milestone;
 }
 
 const roundAllStats = (stats) => {
   // take all needed stats and round them, return in an object
   const r = {};
-  r.ytd_ride_distance = roundStat(stats.ytd_ride_totals.distance, 'ride');
-  r.all_ride_distance = roundStat(stats.all_ride_totals.distance, 'ride');
-  r.ytd_run_distance = roundStat(stats.ytd_run_totals, 'run');
-  r.all_run_distance = roundStat(stats.all_run_totals, 'run');
-  r.ytd_swim_distance = roundStat(stats.ytd_swim_totals.distance, 'swim');
-  r.all_swim_distance = roundStat(stats.all_swim_totals.distance, 'swim');
+  r.ytd_ride_distance = roundStat(stats.ytd_ride_totals.distance, 'Ride');
+  r.all_ride_distance = roundStat(stats.all_ride_totals.distance, 'Ride');
+  r.ytd_run_distance = roundStat(stats.ytd_run_totals.distance, 'Run');
+  r.all_run_distance = roundStat(stats.all_run_totals.distance, 'Run');
+  r.ytd_swim_distance = roundStat(stats.ytd_swim_totals.distance, 'Swim');
+  r.all_swim_distance = roundStat(stats.all_swim_totals.distance, 'Swim');
   return r;
 }
 
@@ -33,19 +33,43 @@ const concatStats = (roundedStats) => {
 
 const getAthleteStats = (z, bundle) => {
   // get the athlete to see the id
-  const promise = z.request(`${process.env.API_URL}/athlete`);
-  return promise.then(function(response){
+  const athletePromise = z.request(`${process.env.API_URL}/athlete`);
+  return athletePromise.then(function(response){
     const athleteInfo = JSON.parse(response.content);
     const athleteId = athleteInfo.id;
     z.console.log(`Athlete id: ${athleteId}`);
+    
     // do a request to the stats
     const statsPromise = z.request(`${process.env.API_URL}/athletes/${athleteId}/stats`);
-    return statsPromise.then((response) => {
-      const stats = JSON.parse(response.content);
+
+    // and to the activities
+    const activitiesPromise = z.request(`${process.env.API_URL}/athlete/activities`);
+    return Promise.all([statsPromise, activitiesPromise]).then((responses) => {
+      const stats = JSON.parse(responses[0].content);
+      const activities
+      
       // round all the watched stats
       stats.rounded = roundAllStats(stats);
+      z.console.log(`rounded stats: ${stats.rounded}`);
+      
       // hack the id into a concat of all watched stats
-      stats.id = concatStats(stats);
+      stats.id = concatStats(stats.rounded);
+
+      // iterate over the recent activities, see if some has gone 
+      // over a milestone
+      // clone the stats so that we don't overwrite the current ones
+      const s = JSON.parse(JSON.stringify(stats));
+      for (let i = 0; i < activities.length; i++) {
+        let a = activities[i];
+        // subtract the distance from the stats
+        let activityType = a.type.toLowerCase();
+        s[`ytd_${activityType}_totals`].distance -= a.distance;
+        s[`all_${activityType}_totals`].distance -= a.distance;
+
+        // round it and see if it's the same as the current
+
+        // if not, we've got it. Return it and break
+      }
       return [stats];
     });
   });
