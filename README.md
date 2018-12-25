@@ -17,6 +17,11 @@ Kde jsem skoncil:
  - je potreba vyresit jak tam dat to athlete id, ponevadz ten vtip je na https://www.strava.com/api/v3/athletes/705929/stats?
  - poresit alerty: https://github.com/cvengros/zapier-strava/network/alerts
 
+Navod:
+ - zapier push
+ - zapier logs --type=http --detailed
+
+
 Done:
  - vypada to tak, ze klasicky trigger akorat chyta kdyz v listu neco pribyde - pak pry jeste existuje update trigger, co ma v name updated a ten kouka jestli se to zmenilo - k tomu ale neni zadna kloudna dokumentace a asi teda neexistuje
  - pak teda udelat to zaokrouhlovani, idealne i s parametrama

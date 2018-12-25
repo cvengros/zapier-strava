@@ -44,12 +44,16 @@ const getAthleteStats = (z, bundle) => {
 
     // and to the activities
     const activitiesPromise = z.request(`${process.env.API_URL}/athlete/activities`);
-    return Promise.all([statsPromise, activitiesPromise]).then((responses) => {
+    // Promise.all([statsPromise, activitiesPromise])
+    return statsPromise.then((responses) => {
+      z.console.log(`responses: ${responses}`);
+      
       const stats = JSON.parse(responses[0].content);
-      const activities
+      const activities = JSON.parse(responses[1].content);
       
       // round all the watched stats
       stats.rounded = roundAllStats(stats);
+      z.console.log(`stats: ${stats}`);
       z.console.log(`rounded stats: ${stats.rounded}`);
       
       // hack the id into a concat of all watched stats
