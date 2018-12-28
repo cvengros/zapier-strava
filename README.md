@@ -19,6 +19,7 @@ Kde jsem skoncil:
 
 Navod:
  - zapier push
+ - pustit to pres web
  - zapier logs --type=http --detailed
 
 

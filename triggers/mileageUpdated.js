@@ -32,6 +32,7 @@ const concatStats = (roundedStats) => {
 }
 
 const getAthleteStats = (z, bundle) => {
+
   // get the athlete to see the id
   const athletePromise = z.request(`${process.env.API_URL}/athlete`);
   return athletePromise.then(function(response){
@@ -43,37 +44,50 @@ const getAthleteStats = (z, bundle) => {
     const statsPromise = z.request(`${process.env.API_URL}/athletes/${athleteId}/stats`);
 
     // and to the activities
-    const activitiesPromise = z.request(`${process.env.API_URL}/athlete/activities`);
-    // Promise.all([statsPromise, activitiesPromise])
-    return statsPromise.then((responses) => {
-      z.console.log(`responses: ${responses}`);
-      
-      const stats = JSON.parse(responses[0].content);
-      const activities = JSON.parse(responses[1].content);
-      
+    const activitiesPromise = z.request(`${process.env.API_URL}/athlete/activities?per_page=2`);
+    // )
+    return Promise.all([statsPromise, activitiesPromise]).then((responses) => {
+      // get stats
+      z.console.log(`stats: ${responses[0].content}`);
+      const stats = z.JSON.parse(responses[0].content);
+
+      // get activities
+      const acts = responses[1].content;
+
+      // get rid of the backslashes
+      const parsable_acts = acts.replace(/\\/g,'')
+      const parsed_acts = z.JSON.parse(parsable_acts);
+      z.console.log(parsed_acts);
+
+
       // round all the watched stats
       stats.rounded = roundAllStats(stats);
-      z.console.log(`stats: ${stats}`);
-      z.console.log(`rounded stats: ${stats.rounded}`);
-      
       // hack the id into a concat of all watched stats
-      stats.id = concatStats(stats.rounded);
+      stats.id = concatStats(stats);
 
       // iterate over the recent activities, see if some has gone 
       // over a milestone
       // clone the stats so that we don't overwrite the current ones
       const s = JSON.parse(JSON.stringify(stats));
-      for (let i = 0; i < activities.length; i++) {
-        let a = activities[i];
+      for (let i = 0; i < parsed_acts.length; i++) {
+        let a = parsed_acts[i];
+        z.console.log(a);
         // subtract the distance from the stats
         let activityType = a.type.toLowerCase();
-        s[`ytd_${activityType}_totals`].distance -= a.distance;
-        s[`all_${activityType}_totals`].distance -= a.distance;
+        let totalKey = `ytd_${activityType}_totals`;
+        // if there's a stat for the activity type
+        if (s.hasOwnProperty(totalKey)){
+          s[totalKey].distance -= a.distance;
+          s[`all_${activityType}_totals`].distance -= a.distance;
+        } else {
+          z.console.log(`skipping activity type ${activityType}`);
+        }
 
         // round it and see if it's the same as the current
 
         // if not, we've got it. Return it and break
       }
+
       return [stats];
     });
   });
