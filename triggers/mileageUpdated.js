@@ -5,30 +5,51 @@ const MILESTONES = {
   Swim: 10
 }
 
+const HUMANIZATION_DISTANCE = 1000;
 const roundStat = (stat, type) => {
   // all stats are in meters
-  const statKm = stat/1000;
+  const statKm = stat/HUMANIZATION_DISTANCE;
   const milestone = MILESTONES[type];
   // getting the last milestone reached
   return Math.floor(statKm/milestone) * milestone;
 }
 
+const STATS = {
+  ytd_ride_totals: 'Ride',
+  all_ride_totals: 'Ride',
+  ytd_run_totals: 'Run',
+  all_run_totals: 'Run',
+  ytd_swim_totals: 'Swim',
+  all_swim_totals: 'Swim'
+}
+
 const roundAllStats = (stats) => {
   // take all needed stats and round them, return in an object
-  const r = {};
-  r.ytd_ride_distance = roundStat(stats.ytd_ride_totals.distance, 'Ride');
-  r.all_ride_distance = roundStat(stats.all_ride_totals.distance, 'Ride');
-  r.ytd_run_distance = roundStat(stats.ytd_run_totals.distance, 'Run');
-  r.all_run_distance = roundStat(stats.all_run_totals.distance, 'Run');
-  r.ytd_swim_distance = roundStat(stats.ytd_swim_totals.distance, 'Swim');
-  r.all_swim_distance = roundStat(stats.all_swim_totals.distance, 'Swim');
-  return r;
+  return Object.keys(STATS).reduce(function(o, k){
+    o[k] = {
+      distance: roundStat(stats[k].distance, STATS[k]) 
+    }; 
+    return o;
+  }, {});
 }
 
 const concatStats = (roundedStats) => {
   // take all rounded stats (sorted by its key so that it's consistent)
   // and join them into a string
-  return Object.keys(roundedStats).sort().map((k) => roundedStats[k]).join(' ');
+  return Object.keys(roundedStats).sort().map((k) => roundedStats[k].distance).join(' ');
+}
+
+const humanizeDistances = (stats) => {
+  // for all keys, divide by 1000 and round it to one decimal
+  const statKeys = Object.keys(STATS);
+  for (let i = 0; i < statKeys.length; i++) {
+    let k = statKeys[i];
+    let humanized = stats[k].distance / HUMANIZATION_DISTANCE;
+    // omg js
+    let rounded = Math.round( humanized * 10) / 10
+    stats[k].distance = rounded
+  }
+  return stats;
 }
 
 const getAthleteStats = (z, bundle) => {
@@ -44,7 +65,7 @@ const getAthleteStats = (z, bundle) => {
     const statsPromise = z.request(`${process.env.API_URL}/athletes/${athleteId}/stats`);
 
     // and to the activities
-    const activitiesPromise = z.request(`${process.env.API_URL}/athlete/activities?per_page=2`);
+    const activitiesPromise = z.request(`${process.env.API_URL}/athlete/activities?per_page=25`);
     // )
     return Promise.all([statsPromise, activitiesPromise]).then((responses) => {
       // get stats
@@ -59,11 +80,10 @@ const getAthleteStats = (z, bundle) => {
       const parsed_acts = z.JSON.parse(parsable_acts);
       z.console.log(parsed_acts);
 
-
       // round all the watched stats
       stats.rounded = roundAllStats(stats);
       // hack the id into a concat of all watched stats
-      stats.id = concatStats(stats);
+      stats.id = concatStats(stats.rounded);
 
       // iterate over the recent activities, see if some has gone 
       // over a milestone
@@ -72,23 +92,53 @@ const getAthleteStats = (z, bundle) => {
       for (let i = 0; i < parsed_acts.length; i++) {
         let a = parsed_acts[i];
         z.console.log(a);
-        // subtract the distance from the stats
+        
         let activityType = a.type.toLowerCase();
-        let totalKey = `ytd_${activityType}_totals`;
+        let yearKey = `ytd_${activityType}_totals`;
+        let totalKey = `all_${activityType}_totals`;
+        
         // if there's a stat for the activity type
+        // subtract the distance from the stats
         if (s.hasOwnProperty(totalKey)){
           s[totalKey].distance -= a.distance;
-          s[`all_${activityType}_totals`].distance -= a.distance;
+          s[yearKey].distance -= a.distance;
         } else {
           z.console.log(`skipping activity type ${activityType}`);
+          continue;
         }
 
-        // round it and see if it's the same as the current
+        z.console.log(`${yearKey}: ${s[yearKey].distance}`);
 
-        // if not, we've got it. Return it and break
+        // round it subtracted and see if it's the same as the rounded current
+        let roundedTotal = roundStat(s[totalKey].distance, a.type);
+        let roundedYear = roundStat(s[yearKey].distance, a.type);
+
+        z.console.log(`${yearKey} rounded: ${roundedYear}`);
+
+        // if not, we've got it. save it and break
+        // overall:
+        if (roundedTotal < stats.rounded[totalKey].distance){
+          stats.rounded.type_changed = a.type;
+          stats.rounded.year_or_total_changed = 'Total';
+          stats.rounded.distance_changed = stats.rounded[totalKey].distance;
+          stats.rounded.activity_link_changed = `https://www.strava.com/activities/${a.id}`;
+          stats.rounded.activity_name_changed = a.name;
+          break;
+        }
+
+        // year
+        if (roundedYear < stats.rounded[yearKey].distance){
+          stats.rounded.type_changed = a.type;
+          stats.rounded.year_or_total_changed = 'This Year';
+          stats.rounded.distance_changed = stats.rounded[yearKey].distance;
+          stats.rounded.activity_link_changed = `https://www.strava.com/activities/${a.id}`;
+          stats.rounded.activity_name_changed = a.name;
+          break;
+        }
       }
-
-      return [stats];
+      let humanizedStats = humanizeDistances(stats)
+      z.console.log(humanizedStats);
+      return [humanizedStats];
     });
   });
 };
@@ -104,6 +154,16 @@ module.exports = {
     perform: getAthleteStats,
     sample:{
       "id": 123,
+      "rounded": {
+        "ytd_ride_totals": {
+          "distance": 1000
+        },
+        "type_changed": "Ride",
+        "year_or_total_changed": "Total",
+        "distance_changed": 1000,
+        "activity_link_changed": "https://www.strava.com/activities/13456",
+        "activity_name_changed": "New Activity"
+      },
       "biggest_ride_distance": 198794.0,
       "biggest_climb_elevation_gain": 1158.0,
       "recent_ride_totals": {

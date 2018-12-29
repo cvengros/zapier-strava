@@ -1,4 +1,5 @@
 Kde jsem skoncil:
+ - vydelit vsechny stats tisicem
  - takze nakonec vracet stats, projit par poslednich aktivit a koukat co prehouplo, pri prvnim prehoupnuti konec. tim ze se to bude poustet akorat kdyz se menily ty kulaty, tak je zaruceny ze nedostanes email se starym prehoupnutim
  - poslat max jeden mail per task (zap run) - kdybych tam narval kazdou novou aktivitu, tak dostanu email za kazdou aktivitu a maximalne tam bude napsany, ze sorry, nic jsi neprekrocil
  - Zvazit - trigger na activity, kouknout jestli prehoupla, vzit stats - pak nebudu muset resit ty pozdni uploady a pod, pocitat si totaly minus to co prochazim - otazka ale je jestli to nebude chodit vickrat - za kazdou novou aktivitu
